@@ -9,8 +9,7 @@
  */
 typedef struct Entry Entry;
 
-/* 策略配置文件（仅作为 pArg 未提供时的回退） */
-#define DEFAULT_POLICY_CONF "/etc/ldap/ppolicy_ext.conf"
+/* 策略必须通过 pArg (pwdCheckModuleArg) 传递，不再支持配置文件回退 */
 
 /*
  * 从 DN 字符串中提取 uid 值。
@@ -127,34 +126,6 @@ static int load_policy_from_arg(const char* arg_str, size_t arg_len, pwd_policy_
     return 0;
 }
 
-/*
- * 从配置文件加载策略（回退方案）。
- */
-static int load_policy_from_conf(const char* conf_path, pwd_policy_extension_t* policy) {
-    FILE* fp;
-
-    memset(policy, 0, sizeof(*policy));
-
-    fp = fopen(conf_path ? conf_path : DEFAULT_POLICY_CONF, "r");
-    if (!fp) return -1;
-
-    char line[1024];
-    while (fgets(line, sizeof(line), fp)) {
-        char* trimmed = trim_whitespace(line);
-        if (*trimmed == '#' || *trimmed == '\0') continue;
-
-        char* eq = strchr(trimmed, '=');
-        if (!eq) continue;
-
-        *eq = '\0';
-        char* key = trim_whitespace(trimmed);
-        char* val = trim_whitespace(eq + 1);
-        parse_policy_line(key, val, policy);
-    }
-
-    fclose(fp);
-    return 0;
-}
 
 /*
  * check_password — slapo-ppolicy 标准入口点。
@@ -180,7 +151,6 @@ int check_password(char *pPasswd, struct berval *pErrmsg, Entry *pEntry, struct 
     pwd_user_context_t user;
     pwd_check_result_t result;
     char errbuf[256];
-    int policy_loaded = 0;
 
     memset(&policy, 0, sizeof(policy));
     memset(&user, 0, sizeof(user));
@@ -196,21 +166,11 @@ int check_password(char *pPasswd, struct berval *pErrmsg, Entry *pEntry, struct 
         goto fail;
     }
 
-    /* 优先从 pwdCheckModuleArg 加载策略 */
+    /* 从 pwdCheckModuleArg 加载策略（可选） */
     if (pArg && pArg->bv_val && pArg->bv_len > 0) {
-        if (load_policy_from_arg(pArg->bv_val, pArg->bv_len, &policy) == 0) {
-            policy_loaded = 1;
-        }
+        load_policy_from_arg(pArg->bv_val, pArg->bv_len, &policy);
     }
-
-    /* 回退到配置文件 */
-    if (!policy_loaded) {
-        if (load_policy_from_conf(NULL, &policy) != 0) {
-            snprintf(errbuf, sizeof(errbuf),
-                     "No pwdCheckModuleArg and failed to load %s", DEFAULT_POLICY_CONF);
-            goto fail;
-        }
-    }
+    /* 无策略时使用全0 policy，跳过所有检查（相当于无约束） */
 
     /* 构建用户上下文 */
     user.password = pPasswd;

@@ -75,9 +75,7 @@ ppolicy_ext_init(&ctx);
 
 **第二步：加载策略配置**（`src/check_password.c:200-213`）
 
-策略定义了"密码需要满足哪些规则"。加载优先级：
-1. 优先从 `pArg`（LDAP 存储的配置）解析，格式如 `extPwdMaxLength=32 extPwdCharSet=15`
-2. 如果没有 `pArg`，回退读取配置文件 `/etc/ldap/ppolicy_ext.conf`
+策略定义了"密码需要满足哪些规则"。策略通过 `pArg`（LDAP 存储的配置）传递，格式如 `extPwdMaxLength=32 extPwdCharSet=15`。如果没有 `pArg`，模块跳过所有检查（无约束）。
 
 解析后得到一个 `pwd_policy_extension_t` 结构体：
 

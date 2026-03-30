@@ -187,24 +187,24 @@ assert_output_contains \
     ldap_search -b "$POLICY_DN" -s base "(objectClass=pwdPolicyExt)"
 
 assert_output_contains \
-    "1.2 extPwdMaxLength 属性存在且值为 64" \
-    "extPwdMaxLength: 64" \
-    ldap_search -b "$POLICY_DN" -s base extPwdMaxLength
+    "1.2 pwdCheckModuleArg 包含 extPwdMaxLength=64" \
+    "extPwdMaxLength=64" \
+    ldap_search -b "$POLICY_DN" -s base pwdCheckModuleArg
 
 assert_output_contains \
-    "1.3 extPwdCharSet 属性存在且值为 7" \
-    "extPwdCharSet: 7" \
-    ldap_search -b "$POLICY_DN" -s base extPwdCharSet
+    "1.3 pwdCheckModuleArg 包含 extPwdCharSet=7" \
+    "extPwdCharSet=7" \
+    ldap_search -b "$POLICY_DN" -s base pwdCheckModuleArg
 
 assert_output_contains \
-    "1.4 extPwdNoUserCheck 属性存在且值为 TRUE" \
-    "extPwdNoUserCheck: TRUE" \
-    ldap_search -b "$POLICY_DN" -s base extPwdNoUserCheck
+    "1.4 pwdCheckModuleArg 包含 extPwdNoUserCheck=TRUE" \
+    "extPwdNoUserCheck=TRUE" \
+    ldap_search -b "$POLICY_DN" -s base pwdCheckModuleArg
 
 assert_output_contains \
-    "1.5 extPwdForbiddenStrings 属性存在" \
-    "extPwdForbiddenStrings" \
-    ldap_search -b "$POLICY_DN" -s base extPwdForbiddenStrings
+    "1.5 pwdCheckModuleArg 包含 ForbiddenStrings" \
+    "ForbiddenStrings" \
+    ldap_search -b "$POLICY_DN" -s base pwdCheckModuleArg
 
 assert_output_contains \
     "1.6 pwdPolicy 原生对象类存在" \
